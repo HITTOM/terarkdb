@@ -250,6 +250,7 @@ TEST_F(OptionsSettableTest, DBOptionsAllFieldsSettable) {
                              "max_wal_size=4295005604;"
                              "max_total_wal_size=4295005604;"
                              "compaction_readahead_size=0;"
+                             "table_evict_type=kForceEvictIfOpen;"
                              "new_table_reader_for_compaction_inputs=false;"
                              "keep_log_file_num=4890;"
                              "skip_stats_update_on_db_open=false;"

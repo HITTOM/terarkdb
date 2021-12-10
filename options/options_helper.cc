@@ -104,6 +104,7 @@ DBOptions BuildDBOptions(const ImmutableDBOptions& immutable_db_options,
       immutable_db_options.new_table_reader_for_compaction_inputs;
   options.compaction_readahead_size =
       mutable_db_options.compaction_readahead_size;
+  options.table_evict_type = mutable_db_options.table_evict_type;
   options.random_access_max_buffer_size =
       immutable_db_options.random_access_max_buffer_size;
   options.writable_file_max_buffer_size =
@@ -125,7 +126,6 @@ DBOptions BuildDBOptions(const ImmutableDBOptions& immutable_db_options,
       immutable_db_options.skip_stats_update_on_db_open;
   options.wal_recovery_mode = immutable_db_options.wal_recovery_mode;
   options.allow_2pc = immutable_db_options.allow_2pc;
-  options.row_cache = immutable_db_options.row_cache;
 #ifndef ROCKSDB_LITE
   options.wal_filter = immutable_db_options.wal_filter;
 #endif  // ROCKSDB_LITE
@@ -550,6 +550,10 @@ bool ParseOptionHelper(char* opt_address, const OptionType& opt_type,
       return ParseEnum<WALRecoveryMode>(
           wal_recovery_mode_string_map, value,
           reinterpret_cast<WALRecoveryMode*>(opt_address));
+    case OptionType::kTableEviceType:
+      return ParseEnum<TableEvictType>(
+          table_evict_type_string_map, value,
+          reinterpret_cast<TableEvictType*>(opt_address));
     case OptionType::kAccessHint:
       return ParseEnum<DBOptions::AccessHint>(
           access_hint_string_map, value,
@@ -745,6 +749,10 @@ bool SerializeSingleOptionHelper(const char* opt_address,
       return SerializeEnum<WALRecoveryMode>(
           wal_recovery_mode_string_map,
           *reinterpret_cast<const WALRecoveryMode*>(opt_address), value);
+    case OptionType::kTableEviceType:
+      return SerializeEnum<TableEvictType>(
+          table_evict_type_string_map,
+          *reinterpret_cast<const TableEvictType*>(opt_address), value);
     case OptionType::kAccessHint:
       return SerializeEnum<DBOptions::AccessHint>(
           access_hint_string_map,
@@ -1590,6 +1598,10 @@ std::unordered_map<std::string, OptionTypeInfo>
          {offsetof(struct DBOptions, compaction_readahead_size),
           OptionType::kSizeT, OptionVerificationType::kNormal, true,
           offsetof(struct MutableDBOptions, compaction_readahead_size)}},
+        {"table_evict_type",
+         {offsetof(struct DBOptions, table_evict_type),
+          OptionType::kTableEviceType, OptionVerificationType::kNormal, true,
+          offsetof(struct MutableDBOptions, table_evict_type)}},
         {"random_access_max_buffer_size",
          {offsetof(struct DBOptions, random_access_max_buffer_size),
           OptionType::kSizeT, OptionVerificationType::kNormal, false, 0}},
@@ -1782,8 +1794,11 @@ std::unordered_map<std::string, OptionTypeInfo>
           offsetof(struct ImmutableDBOptions, avoid_unnecessary_blocking_io)}},
         {"zenfs_gc_ratio",
          {offsetof(struct DBOptions, zenfs_gc_ratio), OptionType::kDouble,
-          OptionVerificationType::kNormal, false,
-          offsetof(struct ImmutableDBOptions, zenfs_gc_ratio)}}};
+          OptionVerificationType::kNormal, false, 0}},
+        {"table_evict_type",
+         {offsetof(struct DBOptions, table_evict_type),
+          OptionType::kTableEviceType, OptionVerificationType::kNormal, true,
+          offsetof(struct MutableDBOptions, table_evict_type)}}};
 
 std::unordered_map<std::string, BlockBasedTableOptions::IndexType>
     OptionsHelper::block_base_table_index_type_string_map = {
@@ -1828,6 +1843,12 @@ std::unordered_map<std::string, WALRecoveryMode>
         {"kPointInTimeRecovery", WALRecoveryMode::kPointInTimeRecovery},
         {"kSkipAnyCorruptedRecords",
          WALRecoveryMode::kSkipAnyCorruptedRecords}};
+
+std::unordered_map<std::string, TableEvictType>
+    OptionsHelper::table_evict_type_string_map = {
+        {"kSkipForceEvict", TableEvictType::kSkipForceEvict},
+        {"kForceEvictIfOpen", TableEvictType::kForceEvictIfOpen},
+        {"kAlwaysForceEvict", TableEvictType::kAlwaysForceEvict}};
 
 std::unordered_map<std::string, DBOptions::AccessHint>
     OptionsHelper::access_hint_string_map = {

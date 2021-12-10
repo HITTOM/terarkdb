@@ -528,6 +528,8 @@ DEFINE_bool(new_table_reader_for_compaction_inputs, true,
 
 DEFINE_int32(compaction_readahead_size, 0, "Compaction readahead size");
 
+DEFINE_int32(table_evict_type, 0, "Table evict type");
+
 DEFINE_int32(random_access_max_buffer_size, 1024 * 1024,
              "Maximum windows randomaccess buffer size");
 
@@ -1210,7 +1212,8 @@ static const bool FLAGS_table_cache_numshardbits_dummy
 
 namespace TERARKDB_NAMESPACE {
 
-static std::shared_ptr<ByteDanceMetricsReporterFactory> metrics_reporter_factory = nullptr;
+static std::shared_ptr<ByteDanceMetricsReporterFactory>
+    metrics_reporter_factory = nullptr;
 
 namespace {
 struct ReportFileOpCounters {
@@ -3239,7 +3242,8 @@ class Benchmark {
     assert(db_.db == nullptr);
 
     if (metrics_reporter_factory == nullptr)
-      metrics_reporter_factory = std::make_shared<ByteDanceMetricsReporterFactory>();
+      metrics_reporter_factory =
+          std::make_shared<ByteDanceMetricsReporterFactory>();
     options.metrics_reporter_factory = metrics_reporter_factory;
     options.max_open_files = FLAGS_open_files;
     if (FLAGS_cost_write_buffer_to_cache || FLAGS_db_write_buffer_size != 0) {
@@ -3291,6 +3295,8 @@ class Benchmark {
     options.new_table_reader_for_compaction_inputs =
         FLAGS_new_table_reader_for_compaction_inputs;
     options.compaction_readahead_size = FLAGS_compaction_readahead_size;
+    options.table_evict_type =
+        static_cast<TableEvictType>(FLAGS_table_evict_type);
     options.random_access_max_buffer_size = FLAGS_random_access_max_buffer_size;
     options.writable_file_max_buffer_size = FLAGS_writable_file_max_buffer_size;
     options.use_fsync = FLAGS_use_fsync;
@@ -5866,22 +5872,25 @@ int db_bench_tool(int argc, char** argv) {
       fprintf(stderr, "No Env registered for URI: %s\n", FLAGS_env_uri.c_str());
       exit(1);
     }
-  } 
+  }
 #ifdef WITH_ZENFS
   else if (!FLAGS_zbd_path.empty()) {
     if (metrics_reporter_factory == nullptr) {
-      metrics_reporter_factory = std::make_shared<ByteDanceMetricsReporterFactory>();
+      metrics_reporter_factory =
+          std::make_shared<ByteDanceMetricsReporterFactory>();
     }
 
     auto dbname = "dbname=" + FLAGS_zbd_path;
-    Status s = NewZenfsEnv(&FLAGS_env, FLAGS_zbd_path, dbname, metrics_reporter_factory);
+    Status s = NewZenfsEnv(&FLAGS_env, FLAGS_zbd_path, dbname,
+                           metrics_reporter_factory);
     if (!s.ok()) {
-        fprintf(stderr, "Error: Init zenfs env failed.\nStatus : %s\n", s.ToString().c_str());
-        exit(1);
+      fprintf(stderr, "Error: Init zenfs env failed.\nStatus : %s\n",
+              s.ToString().c_str());
+      exit(1);
     }
   }
 
-#endif // WITH_ZENFS
+#endif  // WITH_ZENFS
 #endif  // ROCKSDB_LITE
   if (!FLAGS_hdfs.empty()) {
     FLAGS_env = new TERARKDB_NAMESPACE::HdfsEnv(FLAGS_hdfs);

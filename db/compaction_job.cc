@@ -464,8 +464,8 @@ struct CompactionJob::SubcompactionState {
                            const DependenceMap& depend_map, Arena* arena,
                            TableReader** table_reader_ptr) {
       return table_cache->NewIterator(
-          ReadOptions(), job->env_options_, icmp, *file_metadata, depend_map,
-          nullptr, compaction->mutable_cf_options()->prefix_extractor.get(),
+          ReadOptions(), job->env_options_, *file_metadata, depend_map, nullptr,
+          compaction->mutable_cf_options()->prefix_extractor.get(),
           table_reader_ptr, nullptr, false, arena, true, -1);
     };
     InternalKey internal_begin, internal_end;
@@ -527,7 +527,7 @@ struct CompactionJob::SubcompactionState {
             compaction->column_family_data()->table_cache();
         Cache::Handle* handle = nullptr;
         auto s = table_cache->FindTable(
-            job->env_options_, icmp, meta->fd, &handle,
+            job->env_options_, meta->fd, &handle,
             compaction->mutable_cf_options()->prefix_extractor.get());
         if (!s.ok()) {
           return s;
@@ -1345,9 +1345,8 @@ Status CompactionJob::VerifyFiles() {
       ReadOptions ro;
       ro.fill_cache = false;
       InternalIterator* iter = cfd->table_cache()->NewIterator(
-          ro, env_options_, cfd->internal_comparator(), *files_meta[file_idx],
-          empty_dependence_map, nullptr /* range_del_agg */, prefix_extractor,
-          nullptr,
+          ro, env_options_, *files_meta[file_idx], empty_dependence_map,
+          nullptr /* range_del_agg */, prefix_extractor, nullptr,
           output_level == -1
               ? nullptr
               : cfd->internal_stats()->GetFileReadHist(output_level),
@@ -2714,8 +2713,8 @@ Status CompactionJob::InstallCompactionResults(
         ReadOptions ro;
         ro.fill_cache = false;
         InternalIterator* iter = cfd->table_cache()->NewIterator(
-            ro, env_options_, cfd->internal_comparator(), o.file_meta,
-            empty_dependence_map, nullptr /* range_del_agg */,
+            ro, env_options_, o.file_meta, empty_dependence_map,
+            nullptr /* range_del_agg */,
             mutable_cf_options.prefix_extractor.get(), nullptr,
             cfd->internal_stats()->GetFileReadHist(compaction->output_level()),
             false, nullptr /* arena */, false /* skip_filters */,
@@ -2797,8 +2796,8 @@ Status CompactionJob::InstallCompactionResults(
       ReadOptions ro;
       ro.fill_cache = false;
       InternalIterator* iter = cfd->table_cache()->NewIterator(
-          ro, env_options_, cfd->internal_comparator(), file_meta,
-          empty_dependence_map, nullptr /* range_del_agg */,
+          ro, env_options_, file_meta, empty_dependence_map,
+          nullptr /* range_del_agg */,
           mutable_cf_options.prefix_extractor.get(), nullptr,
           cfd->internal_stats()->GetFileReadHist(compaction->output_level()),
           false, nullptr /* arena */, false /* skip_filters */,
