@@ -254,6 +254,12 @@ enum Tickers : uint32_t {
   GC_TOUCH_FILES,
   GC_SKIP_GET_BY_SEQ,
   GC_SKIP_GET_BY_FILE,
+
+  // # of blocks erased from block cache.
+  BLOCK_CACHE_ERASE,
+  // # of failures when erasing blocks from block cache.
+  BLOCK_CACHE_ERASE_FAILURES,
+
   TICKER_ENUM_MAX
 };
 
